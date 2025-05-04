@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Mini GTA Game with Sound</title>
+    <style>
+        canvas {
+            background: #444;
+            display: block;
+            margin: 20px auto;
+            border: 3px solid #222;
+        }
+        body {
+            background-color: black;
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚗 Mini GTA Driving Game</h1>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <!-- Sound Effects -->
+    <audio id="engineSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_0be780ffb4.mp3?filename=car-engine-2-18694.mp3" loop></audio>
+    <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2022/01/18/audio_5bca1d91ba.mp3?filename=car-crash-106973.mp3"></audio>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const engineSound = document.getElementById("engineSound");
+        const crashSound = document.getElementById("crashSound");
+
+        const car = {
+            x: 300,
+            y: 200,
+            width: 40,
+            height: 20,
+            color: "red",
+            speed: 0,
+            angle: 0,
+        };
+
+        const keys = {};
+
+        document.addEventListener("keydown", (e) => {
+            keys[e.key] = true;
+            if (e.key === "ArrowUp") {
+                if (engineSound.paused) engineSound.play();
+            }
+        });
+
+        document.addEventListener("keyup", (e) => {
+            keys[e.key] = false;
+            if (e.key === "ArrowUp") {
+                engineSound.pause();
+                engineSound.currentTime = 0;
+            }
+        });
+
+        function update() {
+            if (keys["ArrowUp"]) car.speed += 0.1;
+            if (keys["ArrowDown"]) car.speed -= 0.1;
+            if (keys["ArrowLeft"]) car.angle -= 0.05;
+            if (keys["ArrowRight"]) car.angle += 0.05;
+
+            // Friction
+            car.speed *= 0.98;
+
+            // Move
+            car.x += Math.cos(car.angle) * car.speed;
+            car.y += Math.sin(car.angle) * car.speed;
+
+            // Edge collision detection with sound
+            const hitEdge =
+                car.x < 0 || car.x > canvas.width ||
+                car.y < 0 || car.y > canvas.height;
+
+            if (hitEdge) {
+                crashSound.play();
+                car.speed = -car.speed * 0.5; // bounce back a bit
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+            ctx.fillStyle = car.color;
+            ctx.fillRect(-car.width / 2, -car.height / 2, car.width, car.height);
+            ctx.restore();
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
